@@ -10,11 +10,20 @@ Besides, you should install c/c++ extension as well.
 
 This takes around 10 minutes. 
 
-## 2. Install gcc
+## 2. Install gcc, make, alpine
 In VS code terminal connected to the Ubuntu, 
 ```
 apt-get update
 apt install g++
+apt install make
+```
+```
+mkdir alpine
+cd alpine
+curl -o alpine.tar.gz http://dl-cdn.alpinelinux.org/alpine/v3.10/releases/x86_64/alpine-minirootfs-3.10.0-x86_64.tar.gz
+tar xvf alpine.tar.gz
+rm alpine.tar.gz
+cd ..
 ```
 
 ## 3. Validation
@@ -34,16 +43,11 @@ wsl --set-version Ubuntu-20.04 2
 
 # Run the container
 
-## 1. Create a cgroup
+## 1. Compile and run
 ```
-sh mygroup.sh
-```
-
-## 2. Compile and run
-```
-gcc -o demo demo.c
+make demo
 sudo ./demo
 ```
 
-## 3. Validation
+## 2. Validation
 Try some commands, such as `ls`, `ps`,...
