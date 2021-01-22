@@ -32,10 +32,8 @@
 #define STACK_SIZE (1024 * 1024)
 static char container_stack[STACK_SIZE];
 
-char* const container_args_chroot[] = {
-    "/usr/sbin/chroot",
-    "alpine",
-    "sh",
+char* const container_args[] = {
+    "/bin/bash",
     NULL
 };
 
@@ -52,7 +50,7 @@ void create_mygroup()
     fp = fopen("/sys/fs/cgroup/memory/mygroup/memory.limit_in_bytes", "a");
     if (fp == NULL)
       exit(1);
-    fputs("655360", fp);
+    fputs("3235840", fp);
     fclose(fp);
 }
 
@@ -61,20 +59,27 @@ void limit_resources()
     FILE *fp = fopen("/sys/fs/cgroup/cpu/mygroup/tasks", "a");
     fputs("1", fp);
     fclose(fp);
-  
+ 
     fp = fopen("/sys/fs/cgroup/memory/mygroup/tasks", "a");
     fputs("1", fp);
     fclose(fp);
 }
 
+void remove_mygroup()
+{
+    rmdir("/sys/fs/cgroup/memory/mygroup");
+    rmdir("/sys/fs/cgroup/cpu/mygroup");
+}
+
 int container_main(void *arg)
 {
     printf("Container [%5d] - inside the container!\n", getpid());
+    sethostname("container", 10);
     create_mygroup();
     limit_resources();
-    mount("proc", "alpine/proc", "proc", 0, 0);
+    mount("proc", "/proc", "proc", 0, 0);
 
-    execv(container_args_chroot[0], container_args_chroot); 
+    execv(container_args[0], container_args); 
     printf("Something's wrong!\n");
     return 0;
 }
@@ -86,6 +91,7 @@ int main()
     int container_pid = clone(container_main, container_stack+STACK_SIZE, CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD, NULL);
 
     waitpid(container_pid, NULL, 0);
+    remove_mygroup();
     printf("Parent - container stopped!\n");
     return 0;
 }
