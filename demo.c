@@ -8,6 +8,7 @@
 *                    - change root directory and open a shell
 *   create_mygroup() - create cgroup and set limits
 *   limit_resources()- add container process to mygroup
+*   setup_root()     - set up rootfs
 *
 * Notes:
 *   The shell process has a pid 1 and runs in alpine/ directory as its root directory.
@@ -33,7 +34,7 @@
 static char container_stack[STACK_SIZE];
 
 char* const container_args[] = {
-    "/bin/bash",
+    "/bin/sh",
     NULL
 };
 
@@ -71,12 +72,21 @@ void remove_mygroup()
     rmdir("/sys/fs/cgroup/cpu/mygroup");
 }
 
+void setup_root()
+{
+    mount("overlay", "./merged", "overlay", 0, "lowerdir=./alpine,upperdir=./diff,workdir=./work");
+    chroot("./merged");
+    chdir("/");
+}
+
 int container_main(void *arg)
 {
     printf("Container [%5d] - inside the container!\n", getpid());
     sethostname("container", 10);
     create_mygroup();
     limit_resources();
+
+    setup_root();
     mount("proc", "/proc", "proc", 0, 0);
 
     execv(container_args[0], container_args); 
